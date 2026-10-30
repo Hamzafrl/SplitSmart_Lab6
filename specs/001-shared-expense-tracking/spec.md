@@ -9,9 +9,9 @@
 
 ### Session 2026-10-29
 
-- Q: Must an expense’s payer also be one of its participants, and may the submitter record another group member as the payer? → A: The payer may be a participant or another group member; the submitter may record either as payer.
+- Q: Must the expense payer be one of its participants, and may the submitter record an expense paid by someone else? → A: The payer must be a participant, and the submitter records only expenses they paid.
 - Q: Who should be allowed to add or remove group members, and what should happen to past expenses when someone leaves? → A: A group manager adds or removes members; members may leave; past expenses and balances remain in group history.
-- Q: What rules should SplitSmart use to reject invalid expense amounts and make split shares add up to the expense total? → A: Reject zero or negative amounts; require percentage shares to total exactly 100%; round to the currency’s smallest unit and distribute any leftover units in participant selection order.
+- Q: What rules should SplitSmart use to reject invalid expense amounts and make split shares add up to the expense total? → A: Expense amounts must be positive; percentage shares must total exactly 100%; round to the currency’s smallest unit and distribute any leftover units in participant order.
 - Q: How should a person create an account, sign in, and regain access if they cannot sign in? → A: Use an email address and password, with password recovery through the verified email address.
 - Q: What information should a user enter when recording a payment, and when should that payment reduce the recorded balance? → A: The payer records the amount, recipient, and payment date; the balance updates immediately.
 
@@ -22,7 +22,7 @@
 - **Account holder**: A person who signs in and accesses their own expense and balance information.
 - **Group member**: A user who participates in a shared-expense group.
 - **Group manager**: The group creator or a designated user who may add or remove group members.
-- **Expense submitter**: A group member who enters an expense and identifies its participants.
+- **Expense submitter**: A group member who records only expenses they paid and identifies the participants, including themselves.
 - **Expense approver**: A person authorized by the group’s review process to review an expense.
 - **Payment recorder**: A user who records a payment made toward an outstanding balance.
 
@@ -32,12 +32,12 @@ As a group member, I want to record an expense, choose who shared it, and specif
 
 **Why this priority**: Entering shared expenses is the core value of SplitSmart and supplies the records needed for balances and reports.
 
-**Independent Test**: Create a group and an expense with its amount, date, description, payer (who may be a different group member from the submitter), participants, and split method; verify the expense is saved for review with those details.
+**Independent Test**: Create a group and an expense with its positive amount, date, description, and split method; verify that the submitter is the payer and is included among the participants, and that the expense is saved for review.
 
 **Acceptance Scenarios**:
 
-1. **Given** a group with members, **When** a member enters an expense with valid details, identifies a group member who paid, and selects equal splitting and participants, **Then** the expense is recorded with those details and awaits the configured review.
-2. **Given** a group with members, **When** a member enters an expense with valid details, identifies a group member who paid, and assigns percentage shares to participants, **Then** the expense is recorded with those shares and awaits the configured review.
+1. **Given** a group with members, **When** a member enters an expense they paid with a positive amount, includes themselves among the participants, and selects equal splitting, **Then** the expense is recorded with those details and awaits the configured review.
+2. **Given** a group with members, **When** a member enters an expense they paid with a positive amount, includes themselves among the participants, and assigns percentage shares totaling exactly 100%, **Then** the expense is recorded with those shares and awaits the configured review.
 3. **Given** an expense being entered, **When** the submitter attaches a receipt image, **Then** the image is associated with the expense; **When** no image is attached, **Then** the expense can still be submitted.
 
 ### User Story 2 - Review expenses and track balances (Priority: P1)
@@ -99,7 +99,7 @@ As a group member, I want to be notified about other members’ new expenses and
 - An expense without an optional receipt image remains submittable.
 - An expense awaiting review, or awaiting any required approval, does not affect balances.
 - Only a group manager may add or remove a member; a member may leave, and leaving does not delete past expenses or balances from group history.
-- The expense creator chooses the participants; the payer must be a group member but need not be a participant, and the submitter may enter an expense paid by another group member.
+- The expense submitter must be the payer and must be included among the expense participants; a submitter cannot record an expense paid by another group member.
 - Expense amounts of zero or less are rejected.
 - Percentage shares must total exactly 100%; other totals are rejected rather than silently normalized.
 - Equal or percentage shares are rounded to the currency’s smallest unit; any leftover units are distributed in participant selection order.
@@ -114,10 +114,10 @@ As a group member, I want to be notified about other members’ new expenses and
 - **FR-001 — Accounts and sign-in**: The system MUST let each person create an individual account and sign in using an email address and password. It MUST provide account recovery through the account’s verified email address.
 - **FR-002 — Personal records**: After sign-in, a user MUST be able to access their own expense and balance information.
 - **FR-003 — Group management**: A user MUST be able to create and manage groups of people for shared-expense tracking. Only a group manager may add or remove a member; a member MUST be able to leave; leaving or removal MUST NOT delete past expenses or balances from group history.
-- **FR-004 — Expense details**: A group member MUST be able to enter a positive expense amount, date, description, and payer; the payer MUST be a member of the expense’s group but need not be a participant, and the submitter MUST be able to record another group member as payer. The system MUST reject amounts of zero or less.
+- **FR-004 — Expense details**: A group member MUST be able to enter a positive expense amount, date, and description only for an expense they paid. The submitter MUST be the payer and MUST be included among the expense participants; the system MUST reject an expense if the payer differs from the submitter, the payer is not a participant, or the amount is zero or less.
 - **FR-005 — Equal splitting**: A group member MUST be able to choose an equal split for an expense; any leftover currency units after rounding MUST be distributed in participant selection order.
 - **FR-006 — Percentage splitting**: A group member MUST be able to choose a percentage-based split and provide each participant’s percentage share. Shares MUST total exactly 100%; other totals MUST be rejected, not silently normalized. Any leftover currency units after rounding MUST be distributed in participant selection order.
-- **FR-007 — Expense participants**: The submitter MUST be able to specify which users are involved in an expense.
+- **FR-007 — Expense participants**: The submitter MUST be able to specify which users are involved in an expense and MUST include themselves as payer.
 - **FR-008 — Optional receipt**: The system MUST allow an optional receipt image to be associated with an expense.
 - **FR-009 — Expense notifications**: When a group member creates a new expense, the system MUST provide a notification to the other members of that group through the configured notification mechanism.
 - **FR-010 — Pre-balance review**: The system MUST place submitted expenses into a review workflow before they are included in balances.
@@ -141,7 +141,7 @@ As a group member, I want to be notified about other members’ new expenses and
 - **AC-001 (FR-001)**: Given a person creating an account, when they provide a valid email address and password, then the system creates an individual account; given an existing account, valid email and password grant access, invalid credentials do not grant access, and a user who cannot sign in can request recovery through the verified email address.
 - **AC-002 (FR-002, NFR-002)**: Given a signed-in user, when they open personal records, then their expense and balance information is available and records outside their authorization are not exposed.
 - **AC-003 (FR-003)**: Given a signed-in user, when they create a group, then they can manage membership as its manager; only a manager can add or remove members, a member can leave, and leaving or removal does not delete past expenses or balances from group history.
-- **AC-004 (FR-004)**: Given an expense entry, when a member provides its amount, date, description, and a payer who belongs to the group, then those values are retained with the submitted expense, whether or not the payer is a participant and whether or not the payer is the submitter.
+- **AC-004 (FR-004, FR-007)**: Given an expense entry, when a group member provides a positive amount, date, and description for an expense they paid and includes themselves among the participants, then the system retains the submitted expense; an expense with a different payer or without the submitter as a participant is rejected.
 - **AC-005 (FR-005, FR-007)**: Given an expense with selected participants, when the submitter chooses equal splitting, then the expense records equal shares rounded to the currency’s smallest unit and distributes any leftover units in participant selection order.
 - **AC-006 (FR-006, FR-007)**: Given an expense with selected participants, when the submitter assigns percentage shares totaling exactly 100%, then the expense records each assigned share and percentage, rounds to the currency’s smallest unit, and distributes any leftover units in participant selection order; a total other than 100% is rejected.
 - **AC-017 (FR-004)**: Given an expense entry, when the amount is zero or negative, then the system rejects it and does not submit the expense.
@@ -180,7 +180,7 @@ The course MVP is a proposed subset implemented as a Java Swing desktop applicat
 
 - **User account**: A person’s sign-in identity and access to their own records.
 - **Group**: A collection of users organized for shared expenses and balances.
-- **Expense**: A dated, described amount submitted by a user, with payer, participants, a split method, optional receipt image, and review state.
+- **Expense**: A positive dated and described amount submitted by its payer, who is also a participant, with a split method, optional receipt image, and review state.
 - **Expense share**: The amount or percentage assigned to one participant in an expense.
 - **Approval decision**: A review action and state for an expense, associated with the configured approval process.
 - **Balance**: The amount owed between two relevant users based on approved expenses and recorded payments.
@@ -203,7 +203,7 @@ The course MVP is a proposed subset implemented as a Java Swing desktop applicat
 - The full product vision remains the primarily web-based service plus Android and iOS applications stated in `UserRequirement.md`.
 - The Java Swing application is a course MVP subset, not a change to the customer’s requested product platforms.
 - Submitted expenses are pending until the configured approval workflow is complete; only approved expenses affect balances.
-- Each expense identifies a group-member payer, who may be different from the submitter or the expense participants.
+- Each expense identifies the submitter as its payer and as one of its participants; the submitter records only expenses they paid.
 - A recorded payment represents a completed payment by its payer; it is reflected in the relevant balance immediately upon recording.
 - Other group members are the notification audience for a new expense; exact channel and delivery preferences remain undecided.
 - NFR-003 and NFR-004 are proposed initial quality targets to make the specification measurable, not targets stated by the customer.
@@ -214,7 +214,7 @@ The course MVP is a proposed subset implemented as a Java Swing desktop applicat
 
 1. Which currencies and maximum expense amounts are supported?
 2. Who may approve or reject an expense, can its submitter approve it, and what happens after rejection? Is one approval sufficient, or are multiple approval levels required?
-3. Which members receive notifications, through what channels, and can users change notification preferences?
+3. Through which channels are other group members notified, and can users change notification preferences?
 4. How should the system handle duplicate, over-balance, or misdirected payments, and should it suggest a simplified settlement plan?
 5. Which custom report parameters and export options are required?
 6. Which receipt image formats and size limits are allowed, and who may view receipts?
