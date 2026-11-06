@@ -1,0 +1,62 @@
+@startuml
+title SplitSmart - Expense Submission and Approval
+start
+:Collect amount, date, description, split, participants and optional receipt;
+:Call SubmitExpenseUseCase;
+:Load group and validate submitter membership;
+:Validate amount > 0;
+:Validate submitterUserId == payerUserId and payer is a participant;
+:Validate split and calculate BigDecimal shares;
+if (Submission valid?) then (yes)
+  :Persist expense as PENDING_REVIEW;
+  :Request notification to other group members;
+  :Show pending status;
+  :Reviewer submits decision;
+  :Load pending expense;
+  if (Reviewer authorized under configured policy?) then (yes)
+    :Record authorized ApprovalEvent;
+    if (Decision is APPROVE?) then (yes)
+      :Apply configured approval policy;
+      if (All required approvals recorded?) then (yes)
+        :Set expense APPROVED;
+        :Persist expense and approval events;
+        :Recalculate balances from approved expenses and payments;
+        :Show updated balances;
+      else (no)
+        :Keep expense out of balances;
+        :Await remaining required approval(s);
+      endif
+    else (no)
+      if (Decision is REJECT?) then (yes)
+        :Record REJECT decision;
+        :Keep expense out of balances;
+        :Apply rejection transition policy [UNRESOLVED];
+      else (REQUEST_CHANGES)
+        :Record REQUEST_CHANGES decision;
+        :Keep expense out of balances;
+        :Apply change/resubmission policy [UNRESOLVED];
+      endif
+    endif
+  else (no)
+    :Return unauthorized reviewer response;
+    :Expense remains excluded from balances;
+    :Unauthorized-action audit policy [UNRESOLVED];
+  endif
+else (no)
+  :Return validation errors;
+  :Do not submit expense;
+endif
+stop
+
+note right
+  Confirmed: pending expenses do not affect balances;
+  an expense becomes eligible only after all configured
+  approvals are recorded. The detailed specification
+  permits one or multiple approvals.
+
+  Unresolved: reviewer permissions, self-approval,
+  reviewer selection/order, rejection transition, and
+  REQUEST_CHANGES state/resubmission. These branches
+  identify policy points without choosing their outcomes.
+end note
+@enduml

@@ -1,0 +1,49 @@
+@startuml
+title SplitSmart - Expense Submission, Review, and Balance Update
+start
+:User enters amount, date, description, split, participants and optional receipt;
+:Swing adapter sends SubmitExpense request;
+:Load group and membership through ports;
+:Validate positive amount;
+:Validate submitter is payer and participant;
+:Validate split and compute shares;
+if (Valid?) then (yes)
+  :Create expense with PENDING_REVIEW status;
+  :Persist expense and participants;
+  :Request expense-created notification;
+  :Show pending review status;
+  :Await reviewer action;
+  :Load pending expense and reviewer context;
+  :Apply configured reviewer authorization;
+  if (Authorized and expense pending?) then (yes)
+    if (Decision?) then (Approve)
+      :Record approval event;
+      :Set expense status to APPROVED;
+      :Persist review decision;
+      :Recalculate pairwise balances from approved expenses and payments;
+      :Present updated balance summary;
+    else (Reject)
+      :Record rejection event;
+      :Set expense status to REJECTED;
+      :Persist review decision;
+      :Keep expense excluded from balances;
+      :Present rejection status;
+    endif
+  else (no)
+    :Reject review command and preserve pending state;
+    :Present authorization/state error;
+  endif
+else (no)
+  :Return validation errors;
+  :Do not persist a submitted expense;
+endif
+stop
+
+note right
+  Open specification questions: reviewer authorization,
+  whether one or multiple approvals are required,
+  creator self-approval, and behavior after rejection.
+  Approval alone is modeled as the balance gate because
+  only approved expenses affect balances in the data model.
+end note
+@enduml
