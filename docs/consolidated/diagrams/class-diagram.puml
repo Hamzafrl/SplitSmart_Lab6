@@ -1,0 +1,251 @@
+@startuml
+title SplitSmart Hexagonal Architecture - Domain, Ports, and Adapters
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+package "Domain" {
+  class User {
+    +UUID id
+    +String email
+    +String passwordHash
+    +String displayName
+    +Instant createdAt
+  }
+  class Group {
+    +UUID id
+    +String name
+    +UUID managerUserId
+    +Instant createdAt
+  }
+  class GroupMember {
+    +GroupRole role
+    +MembershipState membershipState
+    +Instant joinedAt
+  }
+  class Expense {
+    +UUID id
+    +UUID groupId
+    +String description
+    +BigDecimal amount
+    +LocalDate expenseDate
+    +UUID submitterUserId
+    +UUID payerUserId
+    +SplitType splitType
+    +String receiptReference
+    +ExpenseStatus status
+    +submit()
+    +recordDecision(ApprovalEvent)
+  }
+  class ExpenseParticipant {
+    +BigDecimal percent
+    +BigDecimal shareAmount
+    +int sequenceOrder
+  }
+  class ApprovalEvent {
+    +UUID id
+    +UUID reviewerUserId
+    +ApprovalDecision decision
+    +String comment
+    +Instant createdAt
+  }
+  class Payment {
+    +UUID id
+    +UUID groupId
+    +UUID fromUserId
+    +UUID toUserId
+    +BigDecimal amount
+    +LocalDate paymentDate
+    +String note
+  }
+  class BalanceSummary {
+    +UUID groupId
+    +UUID fromUserId
+    +UUID toUserId
+    +BigDecimal amount
+  }
+  class SplitCalculator {
+    +calculateShares(Expense): List<ExpenseParticipant>
+  }
+  class BalanceCalculator {
+    +calculate(expenses, payments): List<BalanceSummary>
+  }
+  interface ReviewPolicy {
+    +isReviewerAuthorized(reviewer, expense): boolean
+    +hasAllRequiredApprovals(expense): boolean
+  }
+  enum GroupRole {
+    MANAGER
+    MEMBER
+  }
+  enum MembershipState {
+    ACTIVE
+    LEFT
+  }
+  enum SplitType {
+    EQUAL
+    PERCENTAGE
+  }
+  enum ExpenseStatus {
+    DRAFT
+    PENDING_REVIEW
+    APPROVED
+    REJECTED
+    CANCELLED
+  }
+  enum ApprovalDecision {
+    APPROVE
+    REJECT
+    REQUEST_CHANGES
+  }
+}
+
+package "Application / Input Ports" {
+  interface CreateAccountUseCase
+  interface SignInUseCase
+  interface RecoverAccountUseCase
+  interface ViewPersonalRecordsUseCase
+  interface CreateGroupUseCase
+  interface ManageMembershipUseCase
+  interface SubmitExpenseUseCase
+  interface ReviewExpenseUseCase
+  interface ViewBalancesUseCase
+  interface RecordPaymentUseCase
+  interface GenerateReportUseCase
+  class AccountRequest
+  class PersonalRecordsResult
+  class GroupRequest
+  class SubmitExpenseRequest
+  class ReviewExpenseRequest
+  class RecordPaymentRequest
+  class ReportResult
+}
+
+package "Application Services" {
+  class CreateAccountService
+  class SignInService
+  class RecoverAccountService
+  class ViewPersonalRecordsService
+  class CreateGroupService
+  class ManageMembershipService
+  class SubmitExpenseService
+  class ReviewExpenseService
+  class ViewBalancesService
+  class RecordPaymentService
+  class GenerateReportService
+}
+
+package "Application / Output Ports" {
+  interface UserRepository
+  interface GroupRepository
+  interface ExpenseRepository
+  interface PaymentRepository
+  interface NotificationPort
+  interface ReceiptStoragePort
+  interface PasswordRecoveryPort
+  interface ClockPort
+}
+
+package "Adapters" {
+  class SwingAccountController
+  class SwingPersonalRecordsController
+  class SwingGroupController
+  class SwingExpenseController
+  class SwingReviewController
+  class SwingBalanceController
+  class SwingPaymentController
+  class SwingReportController
+  class FileUserRepository
+  class FileGroupRepository
+  class FileExpenseRepository
+  class FilePaymentRepository
+  class DesktopNotificationAdapter
+  class LocalReceiptFileAdapter
+  class VerifiedEmailRecoveryAdapter
+  class SystemClockAdapter
+}
+
+Group "1" *-- "1..*" GroupMember
+User "1" -- "0..*" GroupMember
+Group "1" -- "0..*" Expense
+Expense "1" *-- "1..*" ExpenseParticipant
+User "1" -- "0..*" ExpenseParticipant
+Expense "1" *-- "0..*" ApprovalEvent
+User "1" -- "0..*" ApprovalEvent : reviewer
+Group "1" -- "0..*" Payment
+User "1" -- "0..*" Payment : payer
+User "1" -- "0..*" Payment : recipient
+SplitCalculator ..> Expense
+BalanceCalculator ..> Expense
+BalanceCalculator ..> Payment
+BalanceCalculator ..> BalanceSummary
+
+CreateAccountService ..|> CreateAccountUseCase
+SignInService ..|> SignInUseCase
+RecoverAccountService ..|> RecoverAccountUseCase
+ViewPersonalRecordsService ..|> ViewPersonalRecordsUseCase
+CreateGroupService ..|> CreateGroupUseCase
+ManageMembershipService ..|> ManageMembershipUseCase
+SubmitExpenseService ..|> SubmitExpenseUseCase
+ReviewExpenseService ..|> ReviewExpenseUseCase
+ViewBalancesService ..|> ViewBalancesUseCase
+RecordPaymentService ..|> RecordPaymentUseCase
+GenerateReportService ..|> GenerateReportUseCase
+
+CreateAccountService ..> UserRepository
+CreateAccountService ..> ClockPort
+SignInService ..> UserRepository
+RecoverAccountService ..> UserRepository
+RecoverAccountService ..> PasswordRecoveryPort
+ViewPersonalRecordsService ..> UserRepository
+ViewPersonalRecordsService ..> GroupRepository
+ViewPersonalRecordsService ..> ExpenseRepository
+ViewPersonalRecordsService ..> PaymentRepository
+CreateGroupService ..> GroupRepository
+ManageMembershipService ..> GroupRepository
+SubmitExpenseService ..> ExpenseRepository
+SubmitExpenseService ..> GroupRepository
+SubmitExpenseService ..> NotificationPort
+SubmitExpenseService ..> ReceiptStoragePort
+SubmitExpenseService ..> SplitCalculator
+ReviewExpenseService ..> ExpenseRepository
+ReviewExpenseService ..> UserRepository
+ReviewExpenseService ..> ReviewPolicy
+ViewBalancesService ..> ExpenseRepository
+ViewBalancesService ..> PaymentRepository
+ViewBalancesService ..> BalanceCalculator
+RecordPaymentService ..> PaymentRepository
+RecordPaymentService ..> BalanceCalculator
+GenerateReportService ..> ExpenseRepository
+GenerateReportService ..> PaymentRepository
+
+SwingAccountController ..> CreateAccountUseCase
+SwingAccountController ..> SignInUseCase
+SwingAccountController ..> RecoverAccountUseCase
+SwingPersonalRecordsController ..> ViewPersonalRecordsUseCase
+SwingGroupController ..> CreateGroupUseCase
+SwingGroupController ..> ManageMembershipUseCase
+SwingExpenseController ..> SubmitExpenseUseCase
+SwingReviewController ..> ReviewExpenseUseCase
+SwingBalanceController ..> ViewBalancesUseCase
+SwingPaymentController ..> RecordPaymentUseCase
+SwingReportController ..> GenerateReportUseCase
+
+FileUserRepository ..|> UserRepository
+FileGroupRepository ..|> GroupRepository
+FileExpenseRepository ..|> ExpenseRepository
+FilePaymentRepository ..|> PaymentRepository
+DesktopNotificationAdapter ..|> NotificationPort
+LocalReceiptFileAdapter ..|> ReceiptStoragePort
+VerifiedEmailRecoveryAdapter ..|> PasswordRecoveryPort
+SystemClockAdapter ..|> ClockPort
+
+note right of Expense
+  submitterUserId == payerUserId
+  payer is an ExpenseParticipant
+  only approved expenses affect balances
+end note
+note bottom of ReviewPolicy
+  Required reviewer permissions and approval
+  configuration remain unresolved.
+end note
+@enduml

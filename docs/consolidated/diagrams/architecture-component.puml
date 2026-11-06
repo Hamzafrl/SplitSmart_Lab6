@@ -1,0 +1,156 @@
+@startuml
+title SplitSmart Hexagonal Architecture - Components
+left to right direction
+skinparam componentStyle rectangle
+
+package "Driving Adapters" {
+  [Swing Screens] as Screens
+  [Swing Account Controller] as AccountUI
+  [Swing Group Controller] as GroupUI
+  [Swing Expense Controller] as ExpenseUI
+  [Swing Review Controller] as ReviewUI
+  [Swing Personal Records Controller] as PersonalUI
+  [Swing Balance Controller] as BalanceUI
+  [Swing Payment Controller] as PaymentUI
+  [Swing Report Controller] as ReportUI
+}
+
+package "Application / Domain Core" {
+  package "Input Ports" {
+    interface "CreateAccountUseCase" as CreateAccount
+    interface "SignInUseCase" as SignIn
+    interface "RecoverAccountUseCase" as RecoverAccount
+    interface "ViewPersonalRecordsUseCase" as ViewPersonal
+    interface "CreateGroupUseCase" as CreateGroup
+    interface "ManageMembershipUseCase" as ManageMembership
+    interface "SubmitExpenseUseCase" as SubmitExpense
+    interface "ReviewExpenseUseCase" as ReviewExpense
+    interface "ViewBalancesUseCase" as ViewBalances
+    interface "RecordPaymentUseCase" as RecordPayment
+    interface "GenerateReportUseCase" as GenerateReport
+  }
+
+  package "Application Services" {
+    [CreateAccountService] as CreateAccountSvc
+    [SignInService] as SignInSvc
+    [RecoverAccountService] as RecoverAccountSvc
+    [ViewPersonalRecordsService] as ViewPersonalSvc
+    [CreateGroupService] as CreateGroupSvc
+    [ManageMembershipService] as ManageMembershipSvc
+    [SubmitExpenseService] as SubmitExpenseSvc
+    [ReviewExpenseService] as ReviewExpenseSvc
+    [ViewBalancesService] as ViewBalancesSvc
+    [RecordPaymentService] as RecordPaymentSvc
+    [GenerateReportService] as GenerateReportSvc
+  }
+
+  [Domain Model and Policies\nUser / Group / Expense / Split / Approval / Payment / Balance] as Domain
+
+  package "Output Ports" {
+    interface "UserRepository" as UserRepoPort
+    interface "GroupRepository" as GroupRepoPort
+    interface "ExpenseRepository" as ExpenseRepoPort
+    interface "PaymentRepository" as PaymentRepoPort
+    interface "NotificationPort" as NotificationPort
+    interface "ReceiptStoragePort" as ReceiptPort
+    interface "PasswordRecoveryPort" as PasswordRecoveryPort
+    interface "ClockPort" as ClockPort
+  }
+}
+
+package "Driven Adapters" {
+  [Local File User Repository] as UserFile
+  [Local File Group Repository] as GroupFile
+  [Local File Expense Repository] as ExpenseFile
+  [Local File Payment Repository] as PaymentFile
+  [Local Receipt File Adapter] as ReceiptFile
+  [Configured Notification Adapter] as NotifyAdapter
+  [Verified Email Recovery Adapter] as RecoveryAdapter
+  [System Clock Adapter] as ClockAdapter
+}
+
+Screens --> AccountUI
+Screens --> GroupUI
+Screens --> ExpenseUI
+Screens --> ReviewUI
+Screens --> PersonalUI
+Screens --> BalanceUI
+Screens --> PaymentUI
+Screens --> ReportUI
+
+AccountUI ..> CreateAccount
+AccountUI ..> SignIn
+AccountUI ..> RecoverAccount
+PersonalUI ..> ViewPersonal
+GroupUI ..> CreateGroup
+GroupUI ..> ManageMembership
+ExpenseUI ..> SubmitExpense
+ReviewUI ..> ReviewExpense
+BalanceUI ..> ViewBalances
+PaymentUI ..> RecordPayment
+ReportUI ..> GenerateReport
+
+CreateAccountSvc ..|> CreateAccount
+SignInSvc ..|> SignIn
+RecoverAccountSvc ..|> RecoverAccount
+ViewPersonalSvc ..|> ViewPersonal
+CreateGroupSvc ..|> CreateGroup
+ManageMembershipSvc ..|> ManageMembership
+SubmitExpenseSvc ..|> SubmitExpense
+ReviewExpenseSvc ..|> ReviewExpense
+ViewBalancesSvc ..|> ViewBalances
+RecordPaymentSvc ..|> RecordPayment
+GenerateReportSvc ..|> GenerateReport
+
+CreateAccountSvc --> UserRepoPort
+CreateAccountSvc --> ClockPort
+SignInSvc --> UserRepoPort
+RecoverAccountSvc --> UserRepoPort
+RecoverAccountSvc --> PasswordRecoveryPort
+ViewPersonalSvc --> UserRepoPort
+ViewPersonalSvc --> GroupRepoPort
+ViewPersonalSvc --> ExpenseRepoPort
+ViewPersonalSvc --> PaymentRepoPort
+CreateGroupSvc --> GroupRepoPort
+ManageMembershipSvc --> GroupRepoPort
+SubmitExpenseSvc --> GroupRepoPort
+SubmitExpenseSvc --> ExpenseRepoPort
+SubmitExpenseSvc --> ReceiptPort
+SubmitExpenseSvc --> NotificationPort
+ReviewExpenseSvc --> ExpenseRepoPort
+ReviewExpenseSvc --> UserRepoPort
+ViewBalancesSvc --> ExpenseRepoPort
+ViewBalancesSvc --> PaymentRepoPort
+RecordPaymentSvc --> ExpenseRepoPort
+RecordPaymentSvc --> PaymentRepoPort
+GenerateReportSvc --> ExpenseRepoPort
+GenerateReportSvc --> PaymentRepoPort
+
+CreateAccountSvc --> Domain
+SignInSvc --> Domain
+CreateGroupSvc --> Domain
+SubmitExpenseSvc --> Domain
+ReviewExpenseSvc --> Domain
+ViewBalancesSvc --> Domain
+RecordPaymentSvc --> Domain
+GenerateReportSvc --> Domain
+
+UserFile ..|> UserRepoPort
+GroupFile ..|> GroupRepoPort
+ExpenseFile ..|> ExpenseRepoPort
+PaymentFile ..|> PaymentRepoPort
+ReceiptFile ..|> ReceiptPort
+NotifyAdapter ..|> NotificationPort
+RecoveryAdapter ..|> PasswordRecoveryPort
+ClockAdapter ..|> ClockPort
+
+note bottom of Domain
+  Core has no dependency on Swing or file formats.
+  UI adapters depend on input ports. Application services
+  implement input ports and depend on output ports.
+end note
+note right of NotifyAdapter
+  Delivery mechanism and failure behavior
+  require clarification/configuration.
+end note
+@enduml

@@ -1,0 +1,151 @@
+@startuml
+title SplitSmart Hexagonal Architecture - Representative Class Diagram
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+package "Domain" {
+  class User {
+    +UserId id
+    +String email
+    +String passwordHash
+    +String displayName
+  }
+  class Group {
+    +GroupId id
+    +String name
+  }
+  class GroupMember {
+    +GroupRole role
+    +Instant joinedAt
+  }
+  class Expense {
+    +ExpenseId id
+    +BigDecimal amount
+    +LocalDate expenseDate
+    +String description
+    +SplitType splitType
+    +ExpenseStatus status
+    +submit()
+    +approve()
+    +reject()
+  }
+  class ExpenseParticipant {
+    +BigDecimal percent
+    +BigDecimal shareAmount
+    +int sequenceOrder
+  }
+  class ApprovalEvent {
+    +ApprovalDecision decision
+    +String comment
+    +Instant createdAt
+  }
+  class Payment {
+    +PaymentId id
+    +BigDecimal amount
+    +LocalDate paymentDate
+    +String note
+  }
+  class BalanceSummary {
+    +BigDecimal amount
+  }
+  class SplitCalculator {
+    +calculateShares(Expense): List<Share>
+  }
+  class BalanceCalculator {
+    +calculate(approvedExpenses, payments): List<BalanceSummary>
+  }
+  enum SplitType { EQUAL; PERCENTAGE }
+  enum ExpenseStatus { DRAFT; PENDING_REVIEW; APPROVED; REJECTED; CANCELLED }
+  enum ApprovalDecision { APPROVE; REJECT; REQUEST_CHANGES }
+  enum GroupRole { MANAGER; MEMBER }
+}
+
+package "Application / Input Ports" {
+  interface SubmitExpenseUseCase
+  interface ReviewExpenseUseCase
+  interface RecordPaymentUseCase
+  interface GetReportUseCase
+  class SubmitExpenseService
+  class ReviewExpenseService
+  class RecordPaymentService
+  class ReportQueryService
+  class ExpenseRequest
+  class ReviewRequest
+  class PaymentRequest
+  class ReportResult
+}
+
+package "Application / Output Ports" {
+  interface UserRepository
+  interface GroupRepository
+  interface ExpenseRepository
+  interface PaymentRepository
+  interface NotificationPort
+  interface ClockPort
+}
+
+package "Adapters" {
+  class SwingExpenseController
+  class SwingReviewController
+  class SwingPaymentController
+  class SwingReportController
+  class LocalFileUserRepository
+  class LocalFileGroupRepository
+  class LocalFileExpenseRepository
+  class LocalFilePaymentRepository
+  class DesktopNotificationAdapter
+  class SystemClockAdapter
+  class ApplicationBootstrap
+}
+
+Group "1" *-- "1..*" GroupMember
+User "1" -- "0..*" GroupMember
+Group "1" -- "0..*" Expense
+Expense "1" *-- "1..*" ExpenseParticipant
+User "1" -- "0..*" ExpenseParticipant
+Expense "1" *-- "0..*" ApprovalEvent
+User "1" -- "0..*" ApprovalEvent : reviewer
+Group "1" -- "0..*" Payment
+User "1" -- "0..*" Payment : from
+User "1" -- "0..*" Payment : to
+SplitCalculator ..> Expense
+BalanceCalculator ..> Expense
+BalanceCalculator ..> Payment
+BalanceCalculator ..> BalanceSummary
+
+SubmitExpenseService ..|> SubmitExpenseUseCase
+ReviewExpenseService ..|> ReviewExpenseUseCase
+RecordPaymentService ..|> RecordPaymentUseCase
+ReportQueryService ..|> GetReportUseCase
+SubmitExpenseService ..> UserRepository
+SubmitExpenseService ..> GroupRepository
+SubmitExpenseService ..> ExpenseRepository
+SubmitExpenseService ..> NotificationPort
+SubmitExpenseService ..> SplitCalculator
+ReviewExpenseService ..> ExpenseRepository
+ReviewExpenseService ..> UserRepository
+ReviewExpenseService ..> BalanceCalculator
+RecordPaymentService ..> PaymentRepository
+RecordPaymentService ..> BalanceCalculator
+ReportQueryService ..> ExpenseRepository
+ReportQueryService ..> PaymentRepository
+
+SwingExpenseController ..> SubmitExpenseUseCase
+SwingReviewController ..> ReviewExpenseUseCase
+SwingPaymentController ..> RecordPaymentUseCase
+SwingReportController ..> GetReportUseCase
+LocalFileUserRepository ..|> UserRepository
+LocalFileGroupRepository ..|> GroupRepository
+LocalFileExpenseRepository ..|> ExpenseRepository
+LocalFilePaymentRepository ..|> PaymentRepository
+DesktopNotificationAdapter ..|> NotificationPort
+SystemClockAdapter ..|> ClockPort
+ApplicationBootstrap ..> SubmitExpenseService : wires
+ApplicationBootstrap ..> SwingExpenseController : starts
+
+note right of Expense
+  Detailed spec/data model: submitter is payer
+  and is an expense participant. The research.md
+  text conflicts; see architecture.md.
+end note
+@enduml

@@ -1,0 +1,42 @@
+@startuml
+title SplitSmart - Record Payment and Recalculate Balance
+start
+:User enters amount, recipient, date and optional note;
+:Call RecordPaymentUseCase;
+:Validate required fields and amount > 0;
+if (Basic payment data valid?) then (yes)
+  :Load relevant group and balance source records;
+  if (Possible duplicate?) then (yes)
+    :Apply duplicate-payment policy [UNRESOLVED];
+  else (no)
+    if (Amount exceeds outstanding balance?) then (yes)
+      :Apply overpayment policy [UNRESOLVED];
+    else (no)
+      :Continue with recording;
+    endif
+  endif
+  if (Policy permits recording?) then (yes)
+    :Persist Payment source record;
+    :Recalculate affected pairwise balance;
+    :Return payment and updated balance;
+    :Display updated balance immediately;
+  else (policy says no)
+    :Return policy/validation error;
+    :Do not report payment as recorded;
+  endif
+else (no)
+  :Return required-field/amount error;
+  :Do not record payment;
+endif
+stop
+
+note right
+  Confirmed: amount, recipient and date are recorded;
+  amount must be positive; a recorded payment updates
+  the relevant balance immediately.
+
+  Unresolved: duplicate detection, overpayment/credit,
+  misdirected payments, and which actor may record a
+  payment. Policy branches do not choose an outcome.
+end note
+@enduml
