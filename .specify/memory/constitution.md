@@ -1,15 +1,16 @@
-﻿<!-- Sync Impact Report
-Version change: n/a -> 1.0.0
+<!-- Sync Impact Report
+Version change: 1.0.0 -> 1.0.1
 Modified principles:
-- Initial constitution derived from the original SplitSmart customer request and project constraints
+- III. Object-Oriented Design and Separation of Concerns: clarified design constraints
+- IV. Quality Through Testability and Traceability: clarified traceability and test isolation
+Modified governance:
+- Amendment procedure and compliance review expectations clarified
 Added sections:
-- Core Principles
-- Technology Constraints
-- Quality & Review Workflow
+- None
 Removed sections:
-- none
+- None
 Deferred TODOs:
-- TODO(RATIFICATION_DATE): original ratification date is not recorded in the project artifacts; confirm before final governance sign-off.
+- TODO(RATIFICATION_DATE): confirm the original adoption date before final governance sign-off.
 -->
 
 # SplitSmart Constitution
@@ -23,10 +24,12 @@ The original SplitSmart customer request in UserRequirement.md is the authoritat
 The project MUST use Java 21 as the required language level for the Java Swing MVP and Maven for dependency management, build lifecycle, and test execution. Tooling and framework choices MUST be explicit, versioned, and documented so that builds are reproducible.
 
 ### III. Object-Oriented Design and Separation of Concerns
-The system MUST favor cohesive classes, encapsulation, clear responsibilities, and interfaces that model domain behavior without over-coupling. GUI code, business rules, persistence, and validation responsibilities MUST be separated so that business logic can be tested independently of Swing components.
+The system MUST organize domain behavior into cohesive classes with encapsulated state, explicit
+responsibilities, and interfaces that limit coupling. GUI code, business rules, persistence, and
+validation MUST be separated so business logic can be tested independently of Swing components.
 
 ### IV. Quality Through Testability and Traceability
-JUnit 5 MUST be used for automated tests. Money calculations MUST use BigDecimal, and the project MUST define rounding and currency rules before implementation is treated as complete. Requirements MUST carry stable IDs, and each requirement MUST be traceable to acceptance criteria and the relevant tests when practical.
+JUnit 5 MUST be used for automated tests. Money calculations MUST use BigDecimal, and the project MUST define rounding and currency rules before implementation is treated as complete. Requirements MUST carry stable IDs and MUST be traceable to acceptance criteria and tests for testable behavior.
 
 ### V. Modeling, Review, and Human Accountability
 PlantUML MUST be used for architecture and workflow diagrams when a diagram is needed to clarify structure or behavior. Human reviewers MUST validate AI-generated requirements, diagrams, code, and tests before they are treated as authoritative. This prevents silent drift from the original customer request and preserves correctness, completeness, and accountability.
@@ -39,14 +42,26 @@ Requirements involving money MUST use BigDecimal for all monetary calculations, 
 
 ## Quality & Review Workflow
 
-All requirements, diagrams, code, and tests MUST be reviewed by a human before acceptance. AI-generated output is a drafting aid, not a final authority. Tests MUST verify business behavior independently of GUI interactions where practical, and any unresolved ambiguity MUST be documented and clarified before implementation proceeds.
+All requirements, diagrams, code, and tests MUST be reviewed by a human before acceptance.
+AI-generated output is a drafting aid, not a final authority. Tests MUST verify business behavior
+independently of GUI interactions whenever that behavior can be exercised without the GUI. Any
+unresolved ambiguity MUST be documented and clarified before implementation proceeds.
 
 ## Governance
 
-This Constitution governs project decision-making for SplitSmart. It supersedes informal practice when the two conflict. Any amendment MUST document the reason, preserve the authoritative customer requirement source, and describe the impact on product scope, architecture, or review obligations. Changes requiring new principles or material scope decisions MUST be reviewed by the project lead or designated reviewer before adoption.
+This Constitution governs project decision-making for SplitSmart and supersedes informal practice
+when the two conflict. An amendment proposal MUST document its reason, affected provisions, and
+impact on product scope, architecture, or review obligations. The project lead or designated
+reviewer MUST review and approve amendments before adoption. The adopted amendment MUST update
+this document's version and last-amended date.
 
-Versioning follows semantic versioning. A MAJOR change removes or redefines a governing principle in a backward-incompatible way. A MINOR change adds a principle or materially expands guidance. A PATCH change makes clarification or non-semantic wording improvements. This Constitution MUST be reviewed whenever the project scope, technology stack, or AI-assisted workflow changes materially.
+Versioning follows semantic versioning. A MAJOR change removes or redefines a governing principle
+in a backward-incompatible way. A MINOR change adds a principle or materially expands guidance. A
+PATCH change makes clarifications or non-semantic wording improvements. This Constitution MUST be
+reviewed whenever the project scope, technology stack, or AI-assisted workflow changes materially.
 
-Compliance review requires evidence that design and implementation decisions remain aligned with UserRequirement.md, the approved scope, and these principles. The project MUST record unresolved questions, decisions, and review outcomes so that requirements remain traceable and auditable.
+Compliance reviews MUST confirm that design and implementation decisions align with
+UserRequirement.md, the approved scope, and these principles. The project MUST record unresolved
+questions, decisions, and review outcomes so that requirements remain traceable and auditable.
 
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): original ratification date is not recorded in the project artifacts; confirm before final governance sign-off. | **Last Amended**: 2026-10-29
+**Version**: 1.0.1 | **Ratified**: TODO(RATIFICATION_DATE): original adoption date is not recorded in the project artifacts; confirm before final governance sign-off. | **Last Amended**: 2026-11-12
