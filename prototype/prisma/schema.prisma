@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model EnvironmentCheck {
+  id        Int      @id @default(autoincrement())
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Group {
+  id        Int       @id @default(autoincrement())
+  name      String
+  createdAt DateTime  @default(now())
+  members   Member[]
+  expenses  Expense[]
+}
+
+model Member {
+  id        Int       @id @default(autoincrement())
+  name      String
+  groupId   Int
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paid      Expense[] @relation("Payer")
+  shares    Share[]
+  createdAt DateTime  @default(now())
+  @@unique([groupId, name])
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  description String
+  amountCents Int
+  groupId     Int
+  payerId     Int
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payer       Member   @relation("Payer", fields: [payerId], references: [id])
+  shares      Share[]
+  createdAt   DateTime @default(now())
+}
+
+model Share {
+  expenseId   Int
+  memberId    Int
+  amountCents Int
+  expense     Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  member      Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  @@id([expenseId, memberId])
+}
